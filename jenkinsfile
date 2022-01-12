@@ -1,0 +1,32 @@
+node{
+      
+	  stage('service scm checkout'){
+	  git credentialsId: 'git-creds', url: 'https://github.com/shivaclouddevops/venuehalls-batch-6-qa.git'
+	  }
+  
+    stage('service build stage'){
+	def gradleHome = tool name: 'gradle', type: 'gradle'
+    def gradleCMD = "${gradleHome}/bin/gradle"	
+	sh "${gradleCMD}  clean build"
+	}
+ 
+    stage('send artifact to docker-service-automation-ansible'){
+    sh label: '', script: 'scp /var/lib/jenkins/workspace/service-blue-deployment-venuehalls/build/libs/*.jar root@9.1.1.26:/opt/venue-halls-docker-service-automation/files/'
+}
+
+    stage('send artifact to service-automation-ansible'){
+    sh label: '', script: 'scp /var/lib/jenkins/workspace/service-blue-deployment-venuehalls/build/libs/*.jar root@9.1.1.26:/opt/venuehallsservicesautomation/files/'
+	
+}   
+
+   stage('pinging servers of service-automation-ansible'){
+    sh label: '', script: 'ssh root@9.1.1.26:ansible -m ping service-blue-deployment-servers --private-key /opt/venue-halls-test.pem -u ubuntu'
+	
+}
+
+    stage('running playbook of service-automation-ansible'){
+    sh label: '', script: 'ssh root@9.1.1.26:ansible-playbook /opt/venue-halls-blue-service.yml --private-key /opt/venue-halls-test.pem -u ubuntu'
+	
+}  
+
+}
